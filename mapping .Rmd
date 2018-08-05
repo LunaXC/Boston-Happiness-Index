@@ -1,0 +1,134 @@
+---
+title: "mapping"
+author: "Yaqi Huang"
+date: "2017/11/14"
+output: pdf_document
+---
+
+```{r}
+
+library(geojson)
+library(leaflet)
+library(geojsonio)
+library(dplyr)
+
+```
+
+
+```{r}
+
+income <- read.csv("Climate_Ready_Boston_Social_Vulnerability.csv",stringsAsFactors=FALSE)
+
+#income1 <- income %>% select(GEOID10,Low_to_No)
+#income1$GEOID10 <- as.factor(income1$GEOID10)
+
+boston1 <- geojson_read( "census.geojson.json", what = "sp")
+boston2 <- geojson_read( "Boston_Neighborhoods.geojson.json", what = "sp")
+
+income <- income[match(as.character(boston1$GEOID10), income$GEOID10),]
+
+pal <- colorNumeric("viridis", NULL)
+
+leaflet(boston1) %>%
+  addTiles() %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 0.9,
+              fillColor = ~pal(income$Low_to_No),
+              label = ~paste0(income$GEOID10, ": ", formatC(income$Low_to_No, big.mark = ","))) %>%
+  addLegend(pal = pal, position = 'bottomright', values = ~income$Low_to_No, opacity = 1.0)
+
+
+#check<-as.data.fram
+
+#dir()
+
+
+```
+
+
+```{r}
+
+income <- read.csv("Climate_Ready_Boston_Social_Vulnerability.csv",stringsAsFactors=FALSE)
+
+#colnames(income)[1]<-"Neighborhood"
+
+#income$GEOID10 = as.factor(income$GEOID10)
+
+#a <- str(income$Neighborhood)
+
+#levels(as.factor(income$Neighborhood))
+
+income1 <- read.csv("Climate_Ready_Boston_Social_Vulnerability.csv",stringsAsFactors=FALSE)[c(14,10)]
+
+colnames(income1)[1]<-"Neighborhood"
+
+income.agg<- aggregate(Low_to_No~Neighborhood,data=income1,FUN=sum)
+
+income.agg <- rbind(income.agg, c(NA,1253),c(NA,1253),c(NA,1253))
+
+income.agg$Neighborhood[which(is.na(income.agg$Neighborhood))]<-c("Beacon Hill", "Downtown", "Chinatown")
+
+write.csv(income.agg, file="income_agg.csv")
+
+boston2 <- geojson_read( "Boston_Neighborhoods.geojson.json", what = "sp")
+
+income.agg <- income.agg[match(as.character(boston2$Name), income.agg$Neighborhood),]
+
+
+pal <- colorNumeric("viridis", NULL)
+
+leaflet(boston2) %>%
+  addTiles() %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 0.9,
+              fillColor = ~pal(income.agg$Low_to_No),
+              label = ~paste0(income.agg$Neighborhood, ": ", formatC(income.agg$Low_to_No, big.mark = ","))) %>%
+  addLegend(pal = pal, position = 'bottomright', values = ~income.agg$Low_to_No, opacity = 1.0)
+
+```
+
+
+## PCA
+
+```{r}
+
+PCA <- read.csv("PC_mapping.csv",stringsAsFactors=FALSE)
+
+boston2 <- geojson_read( "Boston_Neighborhoods.geojson.json", what = "sp")
+
+PCA <- PCA[match(as.character(boston2$Name), PCA$Neighborhood),]
+
+levels(as.factor(PCA$PC1))
+
+pal <- colorNumeric("viridis", NULL)
+
+leaflet(boston2) %>%
+  addTiles() %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
+              fillColor = ~pal(PCA$PC1),
+              label = ~paste0(PCA$PC1, ": ", formatC(PCA$PC1, big.mark = ","))) %>%
+  addLegend(pal = pal, position = 'bottomright', values = ~PCA$PC1, opacity = 1.0)
+
+```
+
+
+```{r}
+
+PCA1 <- read.csv("PC1_tract.csv",stringsAsFactors=FALSE)
+
+boston1 <- geojson_read( "census.geojson.json", what = "sp")
+
+PCA1 <- PCA1[match(as.character(boston1$GEOID10), PCA1$GeoID),]
+
+levels(as.factor(PCA1$PC1))
+
+pal <- colorNumeric("viridis", NULL)
+
+leaflet(boston1) %>%
+  addTiles() %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
+              fillColor = ~pal(PCA1$PC1),
+              label = ~paste0(PCA1$PC1, ": ", formatC(PCA1$PC1, big.mark = ","))) %>%
+  addLegend(pal = pal, position = 'bottomright', values = ~PCA1$PC1, opacity = 1.0)
+
+
+```
+
